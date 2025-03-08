@@ -217,7 +217,7 @@ class PubMedFetcher:
                 return None
                 
             pubmed_id = pmid_element.text
-      x
+      
             title_element = article_element.find(".//ArticleTitle")
             title = title_element.text if title_element is not None and title_element.text else "Unknown Title"
             
