@@ -1,0 +1,18 @@
+[tool.poetry]
+name = "aganitha"
+version = "0.1.0"
+description = "A Python tool to fetch PubMed papers with pharma/biotech-affiliated authors."
+authors = ["Sai Lasya"]
+readme = "README.md"
+packages = [{ include = "punmed_fetcher" }]  # Add this line # Ensure this matches your package folder
+
+[tool.poetry.dependencies]
+python = ">=3.12"  # Moved requires-python here
+requests = "^2.32.3"
+
+[tool.poetry.scripts]
+get-papers-list = "run_pubmed:main"
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
