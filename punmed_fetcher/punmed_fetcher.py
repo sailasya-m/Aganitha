@@ -61,25 +61,25 @@ class Paper:
 class PubMedFetcher:
     """Class to fetch and process papers from PubMed."""
     
-    # Base URLs for PubMed API
+
     ESEARCH_URL = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi"
     EFETCH_URL = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi"
     
-    # Academic keywords to identify non-academic affiliations (inverse matching)
+
     ACADEMIC_KEYWORDS = [
         "university", "college", "institute", "school", "academia", 
         "hospital", "clinic", "medical center", "center for", "laboratory of", 
         "national", "federal", "ministry", "department of health"
     ]
     
-    # Company identifiers
+
     COMPANY_IDENTIFIERS = [
         "inc", "llc", "ltd", "corp", "corporation", "pharmaceuticals", 
         "pharma", "biotech", "biosciences", "therapeutics", "biopharmaceuticals",
         "laboratories", "labs", "gmbh", "sa", "ag", "bv", "co."
     ]
     
-    # Regex pattern for email extraction
+   
     EMAIL_PATTERN = r'[\w\.-]+@[\w\.-]+\.\w+'
     
     def __init__(self, debug: bool = False):
@@ -147,7 +147,7 @@ class PubMedFetcher:
             
         self._debug_print(f"Fetching details for {len(pubmed_ids)} papers")
         
-        # Process in batches to avoid overwhelming the API
+        
         batch_size = 20
         all_papers = []
         
@@ -169,8 +169,8 @@ class PubMedFetcher:
                 
                 self._debug_print(f"Processed batch {i//batch_size + 1}/{(len(pubmed_ids)-1)//batch_size + 1}")
                 
-                # Respect API rate limits
-                time.sleep(0.33)  # At most 3 requests per second
+               
+                time.sleep(0.33)  
                 
             except requests.exceptions.RequestException as e:
                 self._debug_print(f"Error fetching paper details: {e}")
@@ -217,12 +217,11 @@ class PubMedFetcher:
                 return None
                 
             pubmed_id = pmid_element.text
-            
-            # Extract title
+      x
             title_element = article_element.find(".//ArticleTitle")
             title = title_element.text if title_element is not None and title_element.text else "Unknown Title"
             
-            # Extract publication date
+           
             pub_date = "Unknown Date"
             pub_date_elements = article_element.findall(".//PubDate/*")
             if pub_date_elements:
@@ -233,7 +232,7 @@ class PubMedFetcher:
                 if pub_date_parts:
                     pub_date = "-".join(pub_date_parts)
             
-            # Extract authors and their affiliations
+       
             authors = []
             author_elements = article_element.findall(".//Author")
             
@@ -248,23 +247,23 @@ class PubMedFetcher:
                 if not name:
                     continue
                 
-                # Extract affiliation
+         
                 affiliation_element = author_element.find(".//Affiliation")
                 affiliation = affiliation_element.text if affiliation_element is not None and affiliation_element.text else None
                 
-                # Check if the author has a corresponding author tag or identifier
+              
                 is_corresponding = False
                 if author_element.get("ValidYN") == "Y" and author_element.get("EqualContrib") == "Y":
                     is_corresponding = True
                 
-                # Extract email if available
+          
                 email = None
                 if affiliation:
                     email_match = re.search(self.EMAIL_PATTERN, affiliation)
                     if email_match:
                         email = email_match.group(0)
                 
-                # Check if author is from a non-academic institution
+           
                 is_non_academic, company = self._check_non_academic_affiliation(affiliation)
                 
                 author = Author(
@@ -278,15 +277,15 @@ class PubMedFetcher:
                 
                 authors.append(author)
             
-            # Try to identify corresponding author if not already identified
+       
             if not any(author.is_corresponding for author in authors) and authors:
-                # Look for any author with an email
+             
                 for author in authors:
                     if author.email:
                         author.is_corresponding = True
                         break
                 
-                # If still no corresponding author, just pick the first one
+               
                 if not any(author.is_corresponding for author in authors):
                     authors[0].is_corresponding = True
             
@@ -317,32 +316,31 @@ class PubMedFetcher:
         
         affiliation_lower = affiliation.lower()
         
-        # Check if the affiliation has academic keywords
+
         has_academic_keywords = any(keyword.lower() in affiliation_lower for keyword in self.ACADEMIC_KEYWORDS)
         
-        # If it has academic keywords, it's probably academic
+    
         if has_academic_keywords:
             return False, None
-        
-        # Check for company identifiers
+  
         for identifier in self.COMPANY_IDENTIFIERS:
             pattern = rf'\b\w+\s+{re.escape(identifier)}\b|\b\w+{re.escape(identifier)}\b'
             match = re.search(pattern, affiliation_lower)
             if match:
-                # Extract the full company name
+        
                 company_name = self._extract_company_name(affiliation, match.group(0))
                 return True, company_name
         
-        # Additional biotech/pharma specific keywords
+     
         biotech_keywords = ["bioscience", "pharmaceuticals", "pharma", "biotech", "therapeutics", "biopharma"]
         for keyword in biotech_keywords:
             if keyword in affiliation_lower:
                 company_name = self._extract_company_name(affiliation, keyword)
                 return True, company_name
         
-        # If no specific company identifier was found, check for basic signs
+    
         if "," in affiliation and not has_academic_keywords:
-            # Might be a company, extract the first part before a comma
+          
             company_name = affiliation.split(",")[0].strip()
             return True, company_name
         
@@ -358,17 +356,17 @@ class PubMedFetcher:
         Returns:
             The extracted company name.
         """
-        # Simple company name extraction - get the sentence or segment containing the match
+   
         index = affiliation.lower().find(matched_text.lower())
         if index == -1:
             return matched_text
         
-        # Get the segment containing the match
+    
         start = max(0, affiliation.rfind(",", 0, index))
         if start == 0:
             start = 0
         else:
-            start += 1  # Skip the comma
+            start += 1 
             
         end = affiliation.find(",", index)
         if end == -1:
@@ -376,7 +374,7 @@ class PubMedFetcher:
             
         segment = affiliation[start:end].strip()
         
-        # Clean up the segment
+  
         segment = re.sub(r'\s+', ' ', segment)
         segment = segment.strip(".,;:()-")
         
@@ -497,20 +495,20 @@ def main() -> int:
     """
     args = parse_arguments()
     
-    # Initialize the PubMed fetcher
+
     fetcher = PubMedFetcher(debug=args.debug)
     
     try:
-        # Get papers with pharmaceutical/biotech authors
+      
         filtered_papers = fetcher.get_papers_with_pharma_authors(args.query)
         
-        # Export the results
+     
         if args.file:
             fetcher.export_to_csv(filtered_papers, args.file)
             if args.debug:
                 print(f"[DEBUG] Results saved to {args.file}", file=sys.stderr)
         else:
-            # Print to console
+        
             fetcher.export_to_csv(filtered_papers, sys.stdout)
             
         return 0
